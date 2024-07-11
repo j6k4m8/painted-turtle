@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "pt"
+version = "0.1.0"
+description = ""
+authors = ["Jordan Matelsky <j6k4m8@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+matplotlib = "^3.9.1"
+numpy = "^2.0.0"
+
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.5"
+black = "^24.4.2"
+ruff = "^0.5.1"
+pytest = "^8.2.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
