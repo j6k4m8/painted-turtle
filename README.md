@@ -41,6 +41,14 @@ studio.debug_draw()
 
 ![Example debugdrag of a square](docs/example-debug-draw.png)
 
+## Fiducials Script
+
+You can use the `fiducials` script to identify the coordinates of real-world objects in the canvas space.
+
+For more information, see the [Fiducials](docs/fiducials.md) documentation.
+
+```bash
+
 ## Roadmap
 
 -   [x] Implement `PTObject` and `Studio` classes
@@ -62,3 +70,4 @@ Turtle graphics is a term in computer graphics that refers to a programming styl
 Painting is when you use a brush or pen to apply pigment to a surface.
 
 So like. Painted Turtle. Get it? 🎨🐢
+```
