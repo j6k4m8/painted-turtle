@@ -11,8 +11,8 @@ In general, the `pt` library comprises `PTObject`s which represent physical reso
 ```bash
 git clone https://github.com/j6k4m8/painted-turtle.git
 cd painted-turtle
-poetry install .
-poetry run pip install https://cdn.evilmadscientist.com/dl/ad/public/AxiDraw_API.zip
+uv sync
+uv pip install https://cdn.evilmadscientist.com/dl/ad/public/AxiDraw_API.zip
 ```
 
 ## Example

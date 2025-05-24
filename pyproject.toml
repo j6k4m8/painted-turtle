@@ -1,22 +1,25 @@
-[tool.poetry]
-name = "pt"
+[project]
+name = "painted-turtle"
 version = "0.1.0"
 description = ""
-authors = ["Jordan Matelsky <j6k4m8@gmail.com>"]
-readme = "README.md"
+authors = [{ name = "Jordan Matelsky", email = "j6k4m8@gmail.com" }]
+requires-python = ">=3.11"
+dependencies = [
+    "matplotlib>=3.9.1",
+    "numpy>=2.0.0",
+]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-matplotlib = "^3.9.1"
-numpy = "^2.0.0"
+[tool.hatch.build.targets.wheel]
+packages = ["pt"]
 
-
-[tool.poetry.group.dev.dependencies]
-ipykernel = "^6.29.5"
-black = "^24.4.2"
-ruff = "^0.5.1"
-pytest = "^8.2.2"
+[dependency-groups]
+dev = [
+    "black>=24.4.2",
+    "ipykernel>=6.29.5",
+    "pytest>=8.2.2",
+    "ruff>=0.5.1",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"

@@ -1,0 +1,26 @@
+import enum
+from typing import Protocol
+from ..vectors import Vec2
+
+
+class EPenState(enum.Enum):
+    UP = enum.auto()
+    DOWN = enum.auto()
+
+
+class Plotter(Protocol):
+    def pen_up(self): ...
+
+    def pen_down(self): ...
+
+    def set_pen_state(self, state: EPenState): ...
+
+    def move_to(self, pos: Vec2): ...
+
+    def line_to(self, pos: Vec2): ...
+
+    def get_pos(self) -> Vec2: ...
+
+    def get_pen_state(self) -> EPenState: ...
+
+    def get_path(self) -> list[tuple[Vec2, Vec2, EPenState]]: ...
