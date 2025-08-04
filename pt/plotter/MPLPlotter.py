@@ -7,6 +7,7 @@ class MPLMockPlotter(Plotter):
         self.pos = Vec2(0, 0)
         self.pen_state = EPenState.UP
         self._path = []
+        self.alignment_offset = Vec2(0, 0)
 
     def pen_up(self):
         self.pen_state = EPenState.UP
@@ -18,9 +19,12 @@ class MPLMockPlotter(Plotter):
         self.pen_state = state
 
     def move_to(self, pos: Vec2):
-        # Draw if pen is down
-        self._path.append((self.pos, pos, self.pen_state))
-        self.pos = pos
+        # Apply alignment offset and draw if pen is down
+        adjusted_pos = Vec2(
+            pos.x + self.alignment_offset.x, pos.y + self.alignment_offset.y
+        )
+        self._path.append((self.pos, adjusted_pos, self.pen_state))
+        self.pos = adjusted_pos
 
     def line_to(self, pos: Vec2):
         self.pen_down()
@@ -34,3 +38,11 @@ class MPLMockPlotter(Plotter):
 
     def get_path(self) -> list[tuple[Vec2, Vec2, EPenState]]:
         return self._path
+
+    def set_alignment_offsets(self, offset: Vec2):
+        """Set the alignment offsets for this plotter."""
+        self.alignment_offset = offset
+
+    def reset_alignment_offsets(self):
+        """Reset the alignment offsets to zero."""
+        self.alignment_offset = Vec2(0, 0)

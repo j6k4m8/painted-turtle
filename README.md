@@ -48,6 +48,8 @@ You can use the `fiducials` script to identify the coordinates of real-world obj
 For more information, see the [Fiducials](docs/fiducials.md) documentation.
 
 ```bash
+uv run fiducials --help
+```
 
 ## Roadmap
 
@@ -60,6 +62,7 @@ For more information, see the [Fiducials](docs/fiducials.md) documentation.
     -   [ ] `WatercolorPalette`
     -   [ ] `WatercolorBasin`
 -   [ ] Pen-switching with a multi-pen setup
+    -   [ ] alignment calibration
 
 ## The Name
 
@@ -70,4 +73,7 @@ Turtle graphics is a term in computer graphics that refers to a programming styl
 Painting is when you use a brush or pen to apply pigment to a surface.
 
 So like. Painted Turtle. Get it? 🎨🐢
+
+```
+
 ```
