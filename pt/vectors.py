@@ -14,6 +14,12 @@ class Vec2(np.ndarray):
     def y(self):
         return self[1]
 
+    def __eq__(self, other):
+        """Override equality operator to properly compare Vec2 objects."""
+        if not isinstance(other, Vec2):
+            return False
+        return abs(self.x - other.x) < 1e-10 and abs(self.y - other.y) < 1e-10
+
 
 def _compute_rotation_from_opposite_corners(a, c, w, h):
     # Extract coordinates of points a and c

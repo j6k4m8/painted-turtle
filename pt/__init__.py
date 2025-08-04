@@ -1,9 +1,12 @@
 from typing import Callable
 from matplotlib import pyplot as plt
 
-from .plotter import Plotter, EPenState
+from .plotter import Plotter, EPenState, MPLMockPlotter
 from .ptobjects.PTObject import PTObject
 from .vectors import Vec2
+
+
+__all__ = ["Studio", "Plotter", "EPenState", "MPLMockPlotter", "PTObject", "Vec2"]
 
 
 class Studio:
