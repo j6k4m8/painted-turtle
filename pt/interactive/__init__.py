@@ -9,41 +9,33 @@ from rich.table import Table
 from rich import box
 from typing import Optional
 
+from .interactive_utils import (
+    BasePositionDisplay,
+    BaseStatusLog,
+    BaseInteractiveApp,
+    AxiDrawController,
+)
 
-class PositionDisplay(Static):
+# Import alignment wizard if available
+try:
+    from .alignment import AlignmentWizardApp, main as alignment_main
+
+    __all__ = [
+        "AxiDrawFiducialApp",
+        "AxiDrawFiducial",
+        "main",
+        "AlignmentWizardApp",
+        "alignment_main",
+    ]
+except ImportError:
+    __all__ = ["AxiDrawFiducialApp", "AxiDrawFiducial", "main"]
+
+
+class PositionDisplay(BasePositionDisplay):
     """A widget to display the current AxiDraw position."""
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.position = Vec2(0, 0)
-        self.delta = 1.0
-        self.is_connected = False
-
-    def update_position(self, position: Vec2, delta: float, is_connected: bool = False):
-        """Update the position and delta values."""
-        self.position = position
-        self.delta = delta
-        self.is_connected = is_connected
-        self.refresh()
-
-    def render(self) -> Panel:
-        table = Table(show_header=False, box=box.ROUNDED)
-        table.add_column("Property", style="cyan", width=12)
-        table.add_column("Value", style="magenta", width=20)
-
-        table.add_row("Mode", "Hardware" if self.is_connected else "Demo")
-        table.add_row("X Position", f"{self.position.x:.3f}")
-        table.add_row("Y Position", f"{self.position.y:.3f}")
-        table.add_row("Delta Step", f"{self.delta:.3f}")
-
-        title_color = "green" if self.is_connected else "yellow"
-        mode_text = "Connected" if self.is_connected else "Demo Mode"
-
-        return Panel(
-            table,
-            title=f"[bold {title_color}]{mode_text}[/bold {title_color}]",
-            border_style=title_color,
-        )
+    def _get_mode_text(self) -> str:
+        return "Connected" if self.is_connected else "Demo Mode"
 
 
 class SavedPointsTable(Static):
@@ -91,6 +83,7 @@ class ControlPanel(Static):
         instructions.append("  Home      Return to origin\n", style="white")
         instructions.append("  PgUp      Disable motors\n", style="white")
         instructions.append("  PgDn      Test pen up/down\n", style="white")
+        instructions.append("  P   Toggle servo power\n", style="white")
         instructions.append("  Escape    Exit application\n", style="white")
 
         return Panel(
@@ -100,13 +93,16 @@ class ControlPanel(Static):
         )
 
 
-class StatusLog(Static):
+class StatusLog(BaseStatusLog):
     """A custom scrolling log widget for status messages."""
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.messages = []
-        self.max_messages = 100
+        super().__init__(max_messages=100, **kwargs)
+
+    def log_success(self, message: str):
+        self.messages.append(f"SUCCESS: {message}")
+        self._trim_messages()
+        self.refresh()
 
     def render(self) -> Panel:
         if not self.messages:
@@ -116,37 +112,20 @@ class StatusLog(Static):
             # Show the last few messages, with newest at bottom
             recent_messages = self.messages[-8:]  # Show last 8 messages
             for msg in recent_messages:
-                content.append(msg + "\n")
+                if msg.startswith("ERROR"):
+                    content.append(f"{msg}\n", style="red")
+                elif msg.startswith("WARNING"):
+                    content.append(f"{msg}\n", style="yellow")
+                elif msg.startswith("SUCCESS"):
+                    content.append(f"{msg}\n", style="green")
+                else:
+                    content.append(f"{msg}\n", style="white")
 
         return Panel(
             content,
             title="[bold red]Status Log[/bold red]",
             border_style="red",
         )
-
-    def log_info(self, message: str):
-        self.messages.append(f"INFO: {message}")
-        if len(self.messages) > self.max_messages:
-            self.messages.pop(0)
-        self.refresh()
-
-    def log_success(self, message: str):
-        self.messages.append(f"SUCCESS: {message}")
-        if len(self.messages) > self.max_messages:
-            self.messages.pop(0)
-        self.refresh()
-
-    def log_warning(self, message: str):
-        self.messages.append(f"WARNING: {message}")
-        if len(self.messages) > self.max_messages:
-            self.messages.pop(0)
-        self.refresh()
-
-    def log_error(self, message: str):
-        self.messages.append(f"ERROR: {message}")
-        if len(self.messages) > self.max_messages:
-            self.messages.pop(0)
-        self.refresh()
 
 
 class AxiDrawFiducialApp(App):
@@ -195,6 +174,7 @@ class AxiDrawFiducialApp(App):
             "equal", "increase_delta", "Increase Step", priority=True
         ),  # For + without shift
         Binding("minus", "decrease_delta", "Decrease Step", priority=True),
+        Binding("p", "toggle_servo_power", "Toggle Servo Power", priority=True),
         Binding("escape", "exit_app", "Exit", priority=True),
         Binding("q", "exit_app", "Exit", priority=True),
     ]
@@ -206,6 +186,7 @@ class AxiDrawFiducialApp(App):
         self.ax = None
         self.delta = 1.0
         self.saved_points = []
+        self.servo_power_enabled = True  # Track servo power state
 
     def compose(self) -> ComposeResult:
         """Create the TUI layout."""
@@ -289,6 +270,8 @@ class AxiDrawFiducialApp(App):
             self.action_disable_motors()
         elif key == "pagedown":
             self.action_test_pen()
+        elif key == "p":
+            self.action_toggle_servo_power()
         elif key == "escape" or key == "q":
             self.action_exit_app()
         else:
@@ -404,6 +387,7 @@ class AxiDrawFiducialApp(App):
             ad.options.mode = "manual"
             ad.options.manual_cmd = "disable_xy"
             ad.plot_run()
+            self.servo_power_enabled = False
             self.status_log.log_info("Motors disabled - you can move the head manually")
         except Exception as e:
             self.status_log.log_error(f"Failed to disable motors: {e}")
@@ -438,6 +422,30 @@ class AxiDrawFiducialApp(App):
         """Exit the application."""
         self.exit()
 
+    def action_toggle_servo_power(self) -> None:
+        """Toggle servo motor power on/off."""
+        try:
+            ad = axidraw.AxiDraw()
+            ad.plot_setup()
+            ad.options.mode = "manual"
+
+            if self.servo_power_enabled:
+                # Disable servos
+                ad.options.manual_cmd = "disable_xy"
+                ad.plot_run()
+                self.servo_power_enabled = False
+                self.status_log.log_info(
+                    "Servo power DISABLED - you can move the head manually"
+                )
+            else:
+                # Enable servos
+                ad.options.manual_cmd = "enable_xy"
+                ad.plot_run()
+                self.servo_power_enabled = True
+                self.status_log.log_info("Servo power ENABLED - motors are locked")
+        except Exception as e:
+            self.status_log.log_error(f"Failed to toggle servo power: {e}")
+
     async def on_unmount(self) -> None:
         """Clean up when the app exits."""
         if self.ax:
@@ -459,15 +467,70 @@ class AxiDrawFiducial:
 
 
 def main():
-    """Main entry point for the fiducial finder script."""
+    """Main entry point for the interactive scripts."""
     import argparse
+    from pt import Vec2
 
-    parser = argparse.ArgumentParser(description="AxiDraw Fiducial Finder TUI")
+    parser = argparse.ArgumentParser(description="Painted Turtle Interactive Tools")
+
+    # Alignment wizard arguments
+    parser.add_argument(
+        "--alignment", action="store_true", help="Start alignment calibration wizard"
+    )
+    parser.add_argument(
+        "--continue",
+        action="store_true",
+        dest="continue_alignment",
+        help="Continue alignment with second pen",
+    )
+    parser.add_argument(
+        "--starting-pos",
+        type=str,
+        help="Starting position as 'x,y' (e.g., '12.34,56.78')",
+    )
+    parser.add_argument(
+        "--circle",
+        action="store_true",
+        help="Draw circles instead of dots (useful for pencils)",
+    )
+    parser.add_argument(
+        "--output", type=str, help="Output file to save alignment offset"
+    )
+
+    # Fiducial finder arguments
     parser.add_argument(
         "-o", "--outfile", type=str, help="Output file to save the fiducial positions"
     )
+
     args = parser.parse_args()
 
+    # Handle alignment wizard
+    if args.alignment:
+        try:
+            from .alignment import AlignmentWizardApp
+
+            starting_pos = Vec2(0, 0)
+            if args.starting_pos:
+                try:
+                    x, y = map(float, args.starting_pos.split(","))
+                    starting_pos = Vec2(x, y)
+                except (ValueError, TypeError):
+                    print("Invalid starting position format. Use 'x,y' format.")
+                    return
+
+            app = AlignmentWizardApp(
+                continue_alignment=args.continue_alignment,
+                starting_pos=starting_pos,
+                circle_mode=args.circle,
+                output_file=args.output,
+            )
+            app.run()
+        except ImportError:
+            print("Alignment wizard requires textual and pyaxidraw packages.")
+            print("Install them with: pip install textual pyaxidraw")
+        return
+
+    # Default to fiducial finder
     app = AxiDrawFiducialApp(outfile=args.outfile)
     app.run()
 

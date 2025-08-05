@@ -6,13 +6,13 @@ authors = [{ name = "Jordan Matelsky", email = "j6k4m8@gmail.com" }]
 requires-python = ">=3.11"
 dependencies = [
     "matplotlib>=3.9.1",
- "numpy>=2.0.0",
- "pynput>=1.8.1",
- "textual>=3.2.0",
+    "numpy>=2.0.0",
+    "pynput>=1.8.1",
+    "textual>=3.2.0",
 ]
 
 [project.scripts]
-fiducial = "pt.interactive:main"
+pti = "pt.interactive:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["pt"]

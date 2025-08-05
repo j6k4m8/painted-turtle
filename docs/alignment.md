@@ -10,6 +10,8 @@ uv run pti --alignment
 
 This will walk you through a wizard. Here are the steps you should follow:
 
+FIRST: Before you continue, you should make sure that the plotter has a little bit of "wiggle room" around it; in other words, don't start the alignment process at exactly the physical corner of the plotter's range of motion. This is because the alignment process will move the pen around a bit, and if you start at the edge, you might run into the edge of the plotter's range of motion.
+
 1. **Load a pen.** Put the first pen into the plotter.
 2. **Start the calibration by running `uv run pti --alignment`.** This will move the pen to a starting position, in the UP position. You can adjust this position with the arrow keys, and with +/- to change the pen's delta size. If you have a position in mind before starting, you can pass `--starting-pos 12.34,56.78` to start at that position instead of the default (0, 0). (This is useful when you have 3D features on the canvas that you don't want to bump. Note that when you pass `--starting-pos`, the wizard will move to the starting position when you start the `pti` alignment script, so make sure there is a clear path to that position.)
 3. When you're ready (i.e., no art underneath the pen), **press Enter to draw a dot.** (If you pass `--circle`, the wizard will draw a tiny (1mm) circle instead of a dot. This is useful for media that don't leave a dot, like pencils.)
